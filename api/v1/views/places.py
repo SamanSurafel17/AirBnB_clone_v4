@@ -126,6 +126,7 @@ def places_search():
     """
 
     if request.get_json() is None:
+        return "NOT FOUND MEPY"
         abort(400, description="Not a JSON")
 
     data = request.get_json()
@@ -176,5 +177,4 @@ def places_search():
         d = p.to_dict()
         d.pop('amenities', None)
         places.append(d)
-
     return jsonify(places)

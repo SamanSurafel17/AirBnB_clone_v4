@@ -1,45 +1,52 @@
 #!/usr/bin/python3
-""" Starts a Flash Web Application """
+"""
+This is module 10-hbnb_filters
+In this module we combine flask with sqlAlchemy for the first time
+Run this script from AirBnB_v2 directory for imports
+"""
+from flask import Flask
+from flask import render_template
 from models import storage
-from models.state import State
-from models.city import City
 from models.amenity import Amenity
+from models.base_model import Base
+from models.city import City
 from models.place import Place
-from os import environ
-from flask import Flask, render_template
+from models.review import Review
+from models.state import State
+from models.user import User
+from os import getenv
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+import uuid
 app = Flask(__name__)
-# app.jinja_env.trim_blocks = True
-# app.jinja_env.lstrip_blocks = True
+
+
+@app.route('/0-hbnb', strict_slashes=False)
+def hbnb():
+    """
+    Route to <url>/0-hbnb
+    """
+    states = storage.all("State").values()
+    amenities = storage.all("Amenity").values()
+    places_tmp = storage.all("Place").values()
+    owners = storage.all("User")
+    places = []
+    for k, v in owners.items():
+        for place in places_tmp:
+            if k == place.user_id:
+                places.append(["{} {}".format(
+                    v.first_name, v.last_name), place])
+    places.sort(key=lambda x: x[1].name)
+    return render_template("0-hbnb.html",
+                           amenities=amenities, result=states, places=places,
+                           cache_id=uuid.uuid4())
 
 
 @app.teardown_appcontext
-def close_db(error):
-    """ Remove the current SQLAlchemy Session """
+def close_session(exception):
+    """Remove the db session or save file"""
     storage.close()
 
 
-@app.route('/0-hbnb/', strict_slashes=False)
-def hbnb():
-    """ HBNB is alive! """
-    states = storage.all(State).values()
-    states = sorted(states, key=lambda k: k.name)
-    st_ct = []
-
-    for state in states:
-        st_ct.append([state, sorted(state.cities, key=lambda k: k.name)])
-
-    amenities = storage.all(Amenity).values()
-    amenities = sorted(amenities, key=lambda k: k.name)
-
-    places = storage.all(Place).values()
-    places = sorted(places, key=lambda k: k.name)
-
-    return render_template('100-hbnb.html',
-                           states=st_ct,
-                           amenities=amenities,
-                           places=places, cache_id=uuid.uuid4())
-
-
 if __name__ == "__main__":
-    """ Main Function """
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host="0.0.0.0", port="5000")
